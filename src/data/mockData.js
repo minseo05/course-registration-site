@@ -7,7 +7,7 @@ export const student = {
 };
 
 export const registrationInfo = {
-  schoolName: '대한대학교',
+  schoolName: '한국외국어대학교',
   title: '2026학년도 1학기 수강신청',
   period: '2026.02.10 10:00 ~ 2026.02.14 18:00',
   startTimeText: '10:00:00',
