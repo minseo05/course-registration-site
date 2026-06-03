@@ -21,7 +21,7 @@ admin 로그인은 주소/admin 에서 가능합니다.
 로컬 개발 시 프로젝트 루트에 `.env.development` 파일을 만들고 아래 값을 입력합니다.
 
 ```env
-VITE_API_BASE_URL=http://localhost:8787/api
+VITE_API_BASE_URL=백엔드_api_주소/api
 
 ## 실행 방법
 
