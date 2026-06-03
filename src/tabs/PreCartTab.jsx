@@ -8,7 +8,6 @@ export default function PreCartTab({
   onApply,
   onCancel,
   onRemovePreCart,
-  onApplyAll,
 }) {
   const preCartCourses = preCartIds
     .map((id) => courses.find((course) => course.id === id))

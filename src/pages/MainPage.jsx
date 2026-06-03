@@ -142,7 +142,6 @@ export default function MainPage({ student, onLogout }) {
             onApply={applyCourse}
             onCancel={cancelCourse}
             onRemovePreCart={removePreCart}
-            onApplyAll={() => {}}
           />
         )}
 
