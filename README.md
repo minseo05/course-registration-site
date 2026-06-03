@@ -11,6 +11,13 @@ React + Vite 기반의 수강신청 사이트 샘플입니다. Cloudflare Pages 
 - 신청 확인 탭: 신청 완료 과목, 신청 학점 요약, 취소
 - 시간표 탭: 신청/취소 결과 자동 반영
 
+## 환경변수
+
+로컬 개발 시 프로젝트 루트에 `.env.development` 파일을 만들고 아래 값을 입력합니다.
+
+```env
+VITE_API_BASE_URL=http://localhost:8787/api
+
 ## 실행 방법
 
 ```bash
@@ -38,8 +45,9 @@ npm run build
 
 ```txt
 src/
+├─ api/           백엔드 API 호출 함수
 ├─ components/    공통 UI 컴포넌트
-├─ data/          임시 데이터
+├─ data/          임시 표시 데이터
 ├─ pages/         로그인/메인 페이지
 ├─ tabs/          메인 내부 탭 화면
 ├─ styles/        전역 CSS
