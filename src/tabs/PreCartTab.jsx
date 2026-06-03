@@ -20,9 +20,6 @@ export default function PreCartTab({
           <h2>사전 신청함</h2>
           <p>신청 시작 전에 관심 과목을 미리 담아두고, 실제 신청 시 빠르게 확인할 수 있습니다.</p>
         </div>
-        <button className="primary-button" type="button" onClick={onApplyAll} disabled={preCartCourses.length === 0}>
-          전체 신청
-        </button>
       </div>
 
       <div className="info-strip">

@@ -30,7 +30,13 @@ export default function CourseApplyTab({
       .filter((course) => grade === 'ALL' || String(course.grade) === grade)
       .filter((course) => {
         if (!normalizedKeyword) return true;
-        return [course.code, course.name, course.professor, course.timeText]
+        return [
+          course.code,
+          course.name,
+          course.professor,
+          course.timeText,
+        ]
+          .filter(Boolean)
           .join(' ')
           .toLowerCase()
           .includes(normalizedKeyword);
@@ -72,6 +78,7 @@ export default function CourseApplyTab({
             />
             전체
           </label>
+
           <label>
             <input
               type="radio"
@@ -82,12 +89,13 @@ export default function CourseApplyTab({
             />
             전공
           </label>
+
           <label>
             <input
               type="radio"
               name="courseType"
-              value="GENERAL"
-              checked={courseType === 'GENERAL'}
+              value="LIBERAL"
+              checked={courseType === 'LIBERAL'}
               onChange={(event) => setCourseType(event.target.value)}
             />
             교양

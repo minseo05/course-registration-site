@@ -7,6 +7,8 @@ import CourseApplyTab from '../tabs/CourseApplyTab';
 import PreCartTab from '../tabs/PreCartTab';
 import ApplyCheckTab from '../tabs/ApplyCheckTab';
 import TimetableTab from '../tabs/TimetableTab';
+import { getRegistrationInfo } from '../api/registrationApi';
+import { getTimetable } from '../api/timetableApi';
 
 import { getCourses } from '../api/courseApi';
 import {
@@ -27,6 +29,8 @@ export default function MainPage({ student, onLogout }) {
   const [preCartIds, setPreCartIds] = useState([]);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [registrationInfo, setRegistrationInfo] = useState(null);
+  const [timetable, setTimetable] = useState(null);
 
   const messageTimer = useRef(null);
 
@@ -40,15 +44,20 @@ export default function MainPage({ student, onLogout }) {
     try {
       setIsLoading(true);
 
-      const [courseList, enrollmentList, preCartList] = await Promise.all([
-        getCourses(),
-        getEnrollments(),
-        getPreCart(),
-      ]);
+      const [courseList, enrollmentList, preCartList, registrationData, timetableData] =
+        await Promise.all([
+          getCourses(),
+          getEnrollments(),
+          getPreCart(),
+          getRegistrationInfo(),
+          getTimetable(),
+        ]);
 
       setCourses(courseList);
       setEnrolledCourseIds(enrollmentList.map((item) => item.courseId));
       setPreCartIds(preCartList.map((item) => item.courseId));
+      setRegistrationInfo(registrationData);
+      setTimetable(timetableData);
     } catch (error) {
       showMessage(error.message);
     } finally {
@@ -118,7 +127,7 @@ export default function MainPage({ student, onLogout }) {
       {message && <div className="toast">{message}</div>}
 
       <section className="tab-content">
-        {activeTab === 'home' && <HomeTab />}
+        {activeTab === 'home' && <HomeTab registrationInfo={registrationInfo} />}
 
         {activeTab === 'course' && (
           <CourseApplyTab
@@ -156,7 +165,11 @@ export default function MainPage({ student, onLogout }) {
         )}
 
         {activeTab === 'timetable' && (
-          <TimetableTab courses={courses} enrolledCourseIds={enrolledCourseIds} />
+          <TimetableTab
+            courses={courses}
+            enrolledCourseIds={enrolledCourseIds}
+            timetable={timetable}
+          />
         )}
       </section>
     </main>
