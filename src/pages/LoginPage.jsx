@@ -1,13 +1,28 @@
 import { useState } from 'react';
 import { registrationInfo } from '../data/mockData';
+import { login } from '../api/authApi';
 
 export default function LoginPage({ onLogin }) {
-  const [studentId, setStudentId] = useState('20261234');
+  const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    onLogin({ studentId });
+
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      const result = await login(studentId, password);
+
+      onLogin(result);
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -41,7 +56,12 @@ export default function LoginPage({ onLogin }) {
         <form onSubmit={handleSubmit}>
           <label>
             학번
-            <input value={studentId} onChange={(event) => setStudentId(event.target.value)} />
+            <input 
+              value={studentId} 
+              onChange={(event) => setStudentId(event.target.value)} 
+              placeholder='학번을 입력하세요'
+              required  
+            />
           </label>
           <label>
             비밀번호
@@ -49,11 +69,14 @@ export default function LoginPage({ onLogin }) {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="데모에서는 입력하지 않아도 됩니다"
+              placeholder="비밀번호를 입력하세요"
+              required
             />
           </label>
-          <button className="primary-button wide" type="submit">
-            로그인
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+          <button className="primary-button wide" type="submit" disabled={isLoading}>
+            {isLoading ? '로그인 중...' : '로그인'}
           </button>
         </form>
 

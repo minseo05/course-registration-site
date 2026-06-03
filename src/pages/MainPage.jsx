@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 import AppHeader from '../components/AppHeader';
 import TabMenu from '../components/TabMenu';
 import HomeTab from '../tabs/HomeTab';
@@ -6,14 +7,27 @@ import CourseApplyTab from '../tabs/CourseApplyTab';
 import PreCartTab from '../tabs/PreCartTab';
 import ApplyCheckTab from '../tabs/ApplyCheckTab';
 import TimetableTab from '../tabs/TimetableTab';
-import { courses, student } from '../data/mockData';
-import { canApplyCourse } from '../utils/courseRules';
 
-export default function MainPage({ onLogout }) {
+import { getCourses } from '../api/courseApi';
+import {
+  getEnrollments,
+  applyCourse as requestApplyCourse,
+  cancelCourse as requestCancelCourse,
+} from '../api/enrollmentApi';
+import {
+  getPreCart,
+  addPreCart as requestAddPreCart,
+  removePreCart as requestRemovePreCart,
+} from '../api/preCartApi';
+
+export default function MainPage({ student, onLogout }) {
   const [activeTab, setActiveTab] = useState('home');
-  const [enrolledCourseIds, setEnrolledCourseIds] = useState(['CS101-01', 'CS201-02']);
-  const [preCartIds, setPreCartIds] = useState(['CS330-01', 'LIB210-03']);
+  const [courses, setCourses] = useState([]);
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
+  const [preCartIds, setPreCartIds] = useState([]);
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
   const messageTimer = useRef(null);
 
   const showMessage = (text) => {
@@ -22,55 +36,73 @@ export default function MainPage({ onLogout }) {
     messageTimer.current = window.setTimeout(() => setMessage(''), 2500);
   };
 
-  const applyCourse = (courseId) => {
-    const course = courses.find((item) => item.id === courseId);
-    if (!course) return;
+  const loadInitialData = async () => {
+    try {
+      setIsLoading(true);
 
-    if (!canApplyCourse(course, enrolledCourseIds, courses, student.maxCredits)) {
-      showMessage('신청할 수 없는 과목입니다. 불가 사유를 확인하세요.');
-      return;
+      const [courseList, enrollmentList, preCartList] = await Promise.all([
+        getCourses(),
+        getEnrollments(),
+        getPreCart(),
+      ]);
+
+      setCourses(courseList);
+      setEnrolledCourseIds(enrollmentList.map((item) => item.courseId));
+      setPreCartIds(preCartList.map((item) => item.courseId));
+    } catch (error) {
+      showMessage(error.message);
+    } finally {
+      setIsLoading(false);
     }
-
-    setEnrolledCourseIds((prev) => [...prev, courseId]);
-    showMessage(`${course.name} 과목이 신청되었습니다.`);
   };
 
-  const cancelCourse = (courseId) => {
-    const course = courses.find((item) => item.id === courseId);
-    setEnrolledCourseIds((prev) => prev.filter((id) => id !== courseId));
-    showMessage(`${course?.name ?? '선택 과목'} 신청이 취소되었습니다.`);
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const applyCourse = async (courseId) => {
+    try {
+      const result = await requestApplyCourse(courseId);
+      showMessage(result.message || '수강신청이 완료되었습니다.');
+      await loadInitialData();
+    } catch (error) {
+      showMessage(error.message);
+    }
   };
 
-  const addPreCart = (courseId) => {
-    const course = courses.find((item) => item.id === courseId);
-    setPreCartIds((prev) => (prev.includes(courseId) ? prev : [...prev, courseId]));
-    showMessage(`${course?.name ?? '선택 과목'}이 사전 신청함에 담겼습니다.`);
+  const cancelCourse = async (courseId) => {
+    try {
+      const result = await requestCancelCourse(courseId);
+      showMessage(result.message || '수강신청이 취소되었습니다.');
+      await loadInitialData();
+    } catch (error) {
+      showMessage(error.message);
+    }
   };
 
-  const removePreCart = (courseId) => {
-    const course = courses.find((item) => item.id === courseId);
-    setPreCartIds((prev) => prev.filter((id) => id !== courseId));
-    showMessage(`${course?.name ?? '선택 과목'}이 사전 신청함에서 삭제되었습니다.`);
+  const addPreCart = async (courseId) => {
+    try {
+      const result = await requestAddPreCart(courseId);
+      showMessage(result.message || '사전 신청함에 담았습니다.');
+      await loadInitialData();
+    } catch (error) {
+      showMessage(error.message);
+    }
   };
 
-  const applyAllPreCart = () => {
-    const targetCourses = preCartIds
-      .map((id) => courses.find((course) => course.id === id))
-      .filter(Boolean);
-
-    let nextIds = [...enrolledCourseIds];
-    let appliedCount = 0;
-
-    targetCourses.forEach((course) => {
-      if (!nextIds.includes(course.id) && canApplyCourse(course, nextIds, courses, student.maxCredits)) {
-        nextIds.push(course.id);
-        appliedCount += 1;
-      }
-    });
-
-    setEnrolledCourseIds(nextIds);
-    showMessage(`${appliedCount}개 과목이 신청되었습니다.`);
+  const removePreCart = async (courseId) => {
+    try {
+      const result = await requestRemovePreCart(courseId);
+      showMessage(result.message || '사전 신청함에서 삭제했습니다.');
+      await loadInitialData();
+    } catch (error) {
+      showMessage(error.message);
+    }
   };
+
+  if (isLoading) {
+    return <main className="main-page">데이터를 불러오는 중입니다.</main>;
+  }
 
   return (
     <main className="main-page">
@@ -80,12 +112,14 @@ export default function MainPage({ onLogout }) {
         courses={courses}
         onLogout={onLogout}
       />
+
       <TabMenu activeTab={activeTab} onChange={setActiveTab} />
 
       {message && <div className="toast">{message}</div>}
 
       <section className="tab-content">
         {activeTab === 'home' && <HomeTab />}
+
         {activeTab === 'course' && (
           <CourseApplyTab
             courses={courses}
@@ -98,6 +132,7 @@ export default function MainPage({ onLogout }) {
             onRemovePreCart={removePreCart}
           />
         )}
+
         {activeTab === 'preCart' && (
           <PreCartTab
             courses={courses}
@@ -107,9 +142,10 @@ export default function MainPage({ onLogout }) {
             onApply={applyCourse}
             onCancel={cancelCourse}
             onRemovePreCart={removePreCart}
-            onApplyAll={applyAllPreCart}
+            onApplyAll={() => {}}
           />
         )}
+
         {activeTab === 'check' && (
           <ApplyCheckTab
             courses={courses}
@@ -119,7 +155,10 @@ export default function MainPage({ onLogout }) {
             onCancel={cancelCourse}
           />
         )}
-        {activeTab === 'timetable' && <TimetableTab courses={courses} enrolledCourseIds={enrolledCourseIds} />}
+
+        {activeTab === 'timetable' && (
+          <TimetableTab courses={courses} enrolledCourseIds={enrolledCourseIds} />
+        )}
       </section>
     </main>
   );
