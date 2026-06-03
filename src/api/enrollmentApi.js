@@ -1,11 +1,11 @@
 import { api } from './client';
 
 function createIdempotencyKey(courseId) {
-  if (crypto?.randomUUID) {
-    return `frontend-${courseId}-${crypto.randomUUID()}`;
-  }
+  const uuid =
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-  return `frontend-${courseId}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `frontend-click-${courseId}-${uuid}`;
 }
 
 export async function getEnrollments() {
@@ -23,7 +23,7 @@ export async function applyCourse(courseId) {
 }
 
 export async function cancelCourse(courseId) {
-  return api(`/enrollments/${courseId}`, {
+  return api(`/enrollments/${encodeURIComponent(courseId)}`, {
     method: 'DELETE',
   });
 }

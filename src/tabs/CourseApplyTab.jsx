@@ -3,6 +3,12 @@ import CourseTable from '../components/CourseTable';
 import { departments, grades } from '../data/mockData';
 import { getUnavailableReason } from '../utils/courseRules';
 
+function normalizeCourseType(type) {
+  if (type === 'GENERAL') return 'LIBERAL';
+  return type;
+}
+
+
 export default function CourseApplyTab({
   courses,
   student,
@@ -25,7 +31,7 @@ export default function CourseApplyTab({
     const normalizedKeyword = keyword.trim().toLowerCase();
 
     return courses
-      .filter((course) => courseType === 'ALL' || course.type === courseType)
+      .filter((course) => courseType === 'ALL' || normalizeCourseType(course.type) === courseType)
       .filter((course) => department === 'ALL' || course.department === department)
       .filter((course) => grade === 'ALL' || String(course.grade) === grade)
       .filter((course) => {

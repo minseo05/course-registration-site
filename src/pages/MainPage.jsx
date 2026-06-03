@@ -22,6 +22,43 @@ import {
   removePreCart as requestRemovePreCart,
 } from '../api/preCartApi';
 
+function unwrapList(response, keys = []) {
+  if (Array.isArray(response)) return response;
+  if (!response || typeof response !== 'object') return [];
+
+  for (const key of keys) {
+    if (Array.isArray(response[key])) return response[key];
+  }
+
+  for (const key of ['data', 'result', 'payload']) {
+    const value = response[key];
+
+    if (Array.isArray(value)) return value;
+
+    if (value && typeof value === 'object') {
+      const nested = unwrapList(value, keys);
+      if (nested.length > 0) return nested;
+    }
+  }
+
+  return Object.values(response).find(Array.isArray) ?? [];
+}
+
+function pickCourseId(item) {
+  if (!item) return null;
+  if (typeof item === 'string' || typeof item === 'number') return String(item);
+
+  return (
+    item.courseId ??
+    item.course_id ??
+    item.course?.id ??
+    item.course?.courseId ??
+    item.id ??
+    null
+  );
+}
+
+
 export default function MainPage({ student, onLogout }) {
   const [activeTab, setActiveTab] = useState('home');
   const [courses, setCourses] = useState([]);
@@ -53,9 +90,41 @@ export default function MainPage({ student, onLogout }) {
           getTimetable(),
         ]);
 
-      setCourses(courseList);
-      setEnrolledCourseIds(enrollmentList.map((item) => item.courseId));
-      setPreCartIds(preCartList.map((item) => item.courseId));
+      const courseItems = unwrapList(courseList, [
+        'courses',
+        'items',
+        'data',
+        'results',
+      ]);
+
+      const enrollmentItems = unwrapList(enrollmentList, [
+        'enrollments',
+        'enrolledCourses',
+        'courses',
+        'items',
+        'data',
+        'results',
+      ]);
+
+      const preCartItems = unwrapList(preCartList, [
+        'preCart',
+        'preCartItems',
+        'cart',
+        'courses',
+        'items',
+        'data',
+        'results',
+      ]);
+
+      setCourses(courseItems);
+
+      setEnrolledCourseIds(
+        enrollmentItems.map(pickCourseId).filter(Boolean)
+      );
+
+      setPreCartIds(
+        preCartItems.map(pickCourseId).filter(Boolean)
+      );
       setRegistrationInfo(registrationData);
       setTimetable(timetableData);
     } catch (error) {
