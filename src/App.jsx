@@ -42,11 +42,18 @@ export default function App() {
       });
   }, [isAdminPath]);
 
-  const handleLoginSuccess = ({ token, student }) => {
-    localStorage.setItem('accessToken', token);
-    localStorage.setItem('student', JSON.stringify(student));
-    setStudent(student);
-  };
+const handleLoginSuccess = (result) => {
+  const token = result.token ?? result.accessToken ?? result.jwt;
+  const nextStudent = result.student ?? result.user ?? result.profile;
+
+  if (!token || !nextStudent) {
+    throw new Error('로그인 응답 형식이 올바르지 않습니다.');
+  }
+
+  localStorage.setItem('accessToken', token);
+  localStorage.setItem('student', JSON.stringify(nextStudent));
+  setStudent(nextStudent);
+};
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -54,11 +61,18 @@ export default function App() {
     setStudent(null);
   };
 
-  const handleAdminLoginSuccess = ({ token, admin }) => {
-    localStorage.setItem('adminAccessToken', token);
-    localStorage.setItem('admin', JSON.stringify(admin));
-    setAdmin(admin);
-  };
+const handleAdminLoginSuccess = (result) => {
+  const token = result.token ?? result.accessToken ?? result.jwt;
+  const nextAdmin = result.admin ?? result.user ?? result.profile;
+
+  if (!token || !nextAdmin) {
+    throw new Error('관리자 로그인 응답 형식이 올바르지 않습니다.');
+  }
+
+  localStorage.setItem('adminAccessToken', token);
+  localStorage.setItem('admin', JSON.stringify(nextAdmin));
+  setAdmin(nextAdmin);
+};
 
   const handleAdminLogout = () => {
     localStorage.removeItem('adminAccessToken');

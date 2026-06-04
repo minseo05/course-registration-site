@@ -81,52 +81,85 @@ export default function MainPage({ student, onLogout }) {
     try {
       setIsLoading(true);
 
-      const [courseList, enrollmentList, preCartList, registrationData, timetableData] =
-        await Promise.all([
-          getCourses(),
-          getEnrollments(),
-          getPreCart(),
-          getRegistrationInfo(),
-          getTimetable(),
+      const [
+        courseResult,
+        enrollmentResult,
+        preCartResult,
+        registrationResult,
+        timetableResult,
+      ] = await Promise.allSettled([
+        getCourses(),
+        getEnrollments(),
+        getPreCart(),
+        getRegistrationInfo(),
+        getTimetable(),
+      ]);
+
+      const failedMessages = [];
+
+      if (courseResult.status === 'fulfilled') {
+        const courseItems = unwrapList(courseResult.value, [
+          'courses',
+          'items',
+          'data',
+          'results',
         ]);
 
-      const courseItems = unwrapList(courseList, [
-        'courses',
-        'items',
-        'data',
-        'results',
-      ]);
+        setCourses(courseItems);
+      } else {
+        failedMessages.push('강의 목록');
+      }
 
-      const enrollmentItems = unwrapList(enrollmentList, [
-        'enrollments',
-        'enrolledCourses',
-        'courses',
-        'items',
-        'data',
-        'results',
-      ]);
+      if (enrollmentResult.status === 'fulfilled') {
+        const enrollmentItems = unwrapList(enrollmentResult.value, [
+          'enrollments',
+          'enrolledCourses',
+          'courses',
+          'items',
+          'data',
+          'results',
+        ]);
 
-      const preCartItems = unwrapList(preCartList, [
-        'preCart',
-        'preCartItems',
-        'cart',
-        'courses',
-        'items',
-        'data',
-        'results',
-      ]);
+        setEnrolledCourseIds(
+          enrollmentItems.map(pickCourseId).filter(Boolean)
+        );
+      } else {
+        failedMessages.push('신청 내역');
+      }
 
-      setCourses(courseItems);
+      if (preCartResult.status === 'fulfilled') {
+        const preCartItems = unwrapList(preCartResult.value, [
+          'preCart',
+          'preCartItems',
+          'cart',
+          'courses',
+          'items',
+          'data',
+          'results',
+        ]);
 
-      setEnrolledCourseIds(
-        enrollmentItems.map(pickCourseId).filter(Boolean)
-      );
+        setPreCartIds(
+          preCartItems.map(pickCourseId).filter(Boolean)
+        );
+      } else {
+        failedMessages.push('사전 신청함');
+      }
 
-      setPreCartIds(
-        preCartItems.map(pickCourseId).filter(Boolean)
-      );
-      setRegistrationInfo(registrationData);
-      setTimetable(timetableData);
+      if (registrationResult.status === 'fulfilled') {
+        setRegistrationInfo(registrationResult.value);
+      } else {
+        failedMessages.push('수강신청 정보');
+      }
+
+      if (timetableResult.status === 'fulfilled') {
+        setTimetable(timetableResult.value);
+      } else {
+        failedMessages.push('시간표');
+      }
+
+      if (failedMessages.length > 0) {
+        showMessage(`${failedMessages.join(', ')}을 불러오지 못했습니다.`);
+      }
     } catch (error) {
       showMessage(error.message);
     } finally {

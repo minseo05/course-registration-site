@@ -12,7 +12,7 @@ export async function addPreCart(courseId) {
 }
 
 export async function removePreCart(courseId) {
-  return api(`/pre-cart/${courseId}`, {
+  return api(`/pre-cart/${encodeURIComponent(courseId)}`, {
     method: 'DELETE',
   });
 }

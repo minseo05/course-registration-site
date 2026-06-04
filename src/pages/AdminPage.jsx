@@ -44,6 +44,35 @@ const emptyWindow = {
   endsAt: '',
 };
 
+function unwrapList(response, keys = []) {
+  if (Array.isArray(response)) return response;
+  if (!response || typeof response !== 'object') return [];
+
+  for (const key of keys) {
+    const value = response[key];
+
+    if (Array.isArray(value)) return value;
+
+    if (value && typeof value === 'object') {
+      const nested = unwrapList(value, keys);
+      if (nested.length > 0) return nested;
+    }
+  }
+
+  for (const key of ['data', 'result', 'payload']) {
+    const value = response[key];
+
+    if (Array.isArray(value)) return value;
+
+    if (value && typeof value === 'object') {
+      const nested = unwrapList(value, keys);
+      if (nested.length > 0) return nested;
+    }
+  }
+
+  return Object.values(response).find(Array.isArray) ?? [];
+}
+
 function JsonEditor({ value, onChange }) {
   const [text, setText] = useState(JSON.stringify(value, null, 2));
 
@@ -98,9 +127,20 @@ export default function AdminPage({ admin, onLogout }) {
         adminListRegistrationWindows(),
       ]);
 
-      setCourses(Array.isArray(courseList) ? courseList : courseList.courses ?? []);
-      setStudents(Array.isArray(studentList) ? studentList : studentList.students ?? []);
-      setWindows(Array.isArray(windowList) ? windowList : windowList.windows ?? []);
+      setCourses(unwrapList(courseList, ['courses', 'items', 'data', 'results']));
+
+      setStudents(unwrapList(studentList, ['students', 'items', 'data', 'results']));
+
+      setWindows(
+        unwrapList(windowList, [
+          'windows',
+          'registrationWindows',
+          'registration_windows',
+          'items',
+          'data',
+          'results',
+        ])
+      );
     } catch (error) {
       setMessage(error.message);
     } finally {
